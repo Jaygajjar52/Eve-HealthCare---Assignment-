@@ -44,19 +44,22 @@ server:
     include-stacktrace: never
     include-message: never
 
-# --- Application settings, bound to @ConfigurationProperties classes in config/ ---
-jwt:
-  # HS256 signing key. Must be at least 32 bytes so HMAC-SHA256 is happy.
-  secret: ${JWT_SECRET:change-me-dev-jwt-secret-at-least-32-bytes-long}
-  expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+# --- Application settings, bound to config/AppProperties ---
+# All three groups are env-overridable, so no secret is ever committed.
+eve:
+  jwt:
+    # HS256 signing key. Must be at least 32 bytes so HMAC-SHA256 is happy.
+    secret: ${JWT_SECRET:change-me-dev-jwt-secret-at-least-32-bytes-long}
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}
 
-payment:
-  # Chance (0.0 - 1.0) that the simulated gateway approves a payment.
-  success-rate: ${PAYMENT_SUCCESS_RATE:0.8}
+  payment:
+    # Chance (0.0 - 1.0) that the simulated gateway approves a payment.
+    # This is a probability, not money, so a double is the right type here.
+    success-rate: ${PAYMENT_SUCCESS_RATE:0.8}
 
-webhook:
-  # Shared secret used to build/verify the X-Signature HMAC header.
-  secret: ${WEBHOOK_SECRET:change-me-dev-webhook-secret}
+  webhook:
+    # Shared secret used to build/verify the X-Signature HMAC header.
+    secret: ${WEBHOOK_SECRET:change-me-dev-webhook-secret}
 
 springdoc:
   api-docs:
