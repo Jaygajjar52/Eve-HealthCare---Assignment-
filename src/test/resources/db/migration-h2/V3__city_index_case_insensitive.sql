@@ -1,0 +1,9 @@
+-- ===========================================================================
+--  H2 fallback copy of V3.
+--
+--  V3 creates an expression index on lower(city). H2 cannot create an index on
+--  an expression at all, so this is skipped in the H2 test schema only. An
+--  index affects query plans, never query results, and no integration test
+--  asserts on it, so nothing is lost. The real PostgreSQL migrations still apply
+--  V3 unchanged.
+-- ===========================================================================
