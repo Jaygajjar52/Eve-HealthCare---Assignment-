@@ -108,4 +108,43 @@ public class Booking {
     void onUpdate() {
         updatedAt = Instant.now();
     }
+
+    /**
+     * The booking state machine, in the only place it is written down.
+     *
+     * <pre>
+     *   PENDING   -> CONFIRMED | FAILED | CANCELLED
+     *   FAILED    -> PENDING          (user retries the payment)
+     *   CONFIRMED -> CANCELLED
+     *   CANCELLED -> (nothing, terminal)
+     * </pre>
+     *
+     * <p>Every change of status in the whole application asks this method
+     * first. Keeping the rules here rather than scattered through the payment
+     * and webhook services is what stops those two from disagreeing about what
+     * is allowed.
+     *
+     * <p>Note that FAILED -> PENDING exists so a customer can pay again after a
+     * failed attempt. It is an assumption, not something the payment gateway
+     * requires: without it a failed booking could never be recovered.
+     */
+    public boolean canTransitionTo(BookingStatus newStatus) {
+        return switch (status) {
+            case PENDING -> newStatus == BookingStatus.CONFIRMED
+                    || newStatus == BookingStatus.FAILED
+                    || newStatus == BookingStatus.CANCELLED;
+            case FAILED -> newStatus == BookingStatus.PENDING;
+            case CONFIRMED -> newStatus == BookingStatus.CANCELLED;
+            case CANCELLED -> false;
+        };
+    }
+
+    /**
+     * Moves to a new status. Callers must have checked
+     * {@link #canTransitionTo(BookingStatus)} first and thrown otherwise, which
+     * keeps the HTTP status code decision in the service layer.
+     */
+    public void transitionTo(BookingStatus newStatus) {
+        this.status = newStatus;
+    }
 }
