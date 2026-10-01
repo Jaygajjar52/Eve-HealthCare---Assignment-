@@ -1,0 +1,53 @@
+# Build output
+target/
+!.mvn/wrapper/maven-wrapper.properties
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Local secrets - only .env.example is committed
+.env
+.env.local
+*.pem
+
+### IntelliJ IDEA ###
+.idea/*
+!.idea/.gitignore
+!.idea/compiler.xml
+!.idea/encodings.xml
+!.idea/misc.xml
+!.idea/vcs.xml
+!.idea/jarRepositories.xml
+!.idea/material_theme_project_new.xml
+.idea/workspace.xml
+*.iws
+*.iml
+*.ipr
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+### VS Code ###
+.vscode/
+
+### Logs ###
+*.log
+logs/
+
+### OS ###
+.DS_Store
+Thumbs.db

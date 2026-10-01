@@ -1,0 +1,51 @@
+name: eve-diagnostics
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: eve-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-evediagnostics}
+      POSTGRES_USER: ${DB_USERNAME:-eve}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-eve_password}
+      # Keeps the image's own locale/timezone out of our stored timestamps.
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # The app must not start migrating before Postgres can actually answer.
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-eve} -d ${DB_NAME:-evediagnostics}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eve-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-evediagnostics}
+      DB_USERNAME: ${DB_USERNAME:-eve}
+      DB_PASSWORD: ${DB_PASSWORD:-eve_password}
+      JWT_SECRET: ${JWT_SECRET:-change-me-dev-jwt-secret-at-least-32-bytes-long}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
+      PAYMENT_SUCCESS_RATE: ${PAYMENT_SUCCESS_RATE:-0.8}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-change-me-dev-webhook-secret}
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
+      TZ: UTC
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

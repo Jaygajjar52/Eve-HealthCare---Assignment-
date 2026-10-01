@@ -1,0 +1,10 @@
+# Keep the build context small: everything the Dockerfile needs is the pom and src/.
+.git
+.gitignore
+.idea
+.env
+.env.local
+target/
+*.iml
+README.md
+docs/

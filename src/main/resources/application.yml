@@ -1,0 +1,73 @@
+# ---------------------------------------------------------------------------
+# Every setting can be overridden with an environment variable so the same jar
+# runs locally, in Docker and in CI without edits. The value after the colon is
+# the default used when the variable is not set.
+# ---------------------------------------------------------------------------
+spring:
+  application:
+    name: diagnostics-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/evediagnostics}
+    username: ${DB_USERNAME:eve}
+    password: ${DB_PASSWORD:eve_password}
+
+  # Flyway owns the schema. Hibernate only checks that the mapping matches it,
+  # it must never create or alter tables itself.
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    # Keeps the persistence context inside the service layer, so lazy loading
+    # cannot accidentally happen while Jackson serialises a response.
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: false
+
+  jackson:
+    # Serialize Instant as 2026-01-30T09:15:30Z instead of a number, in UTC.
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-stacktrace: never
+    include-message: never
+
+# --- Application settings, bound to @ConfigurationProperties classes in config/ ---
+jwt:
+  # HS256 signing key. Must be at least 32 bytes so HMAC-SHA256 is happy.
+  secret: ${JWT_SECRET:change-me-dev-jwt-secret-at-least-32-bytes-long}
+  expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+
+payment:
+  # Chance (0.0 - 1.0) that the simulated gateway approves a payment.
+  success-rate: ${PAYMENT_SUCCESS_RATE:0.8}
+
+webhook:
+  # Shared secret used to build/verify the X-Signature HMAC header.
+  secret: ${WEBHOOK_SECRET:change-me-dev-webhook-secret}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%X{requestId:-no-request-id}] %logger{36} - %msg%n"
+  level:
+    com.eve.diagnostics: INFO
