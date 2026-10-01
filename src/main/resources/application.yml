@@ -68,6 +68,14 @@ eve:
     # Shared secret used to build/verify the X-Signature HMAC header.
     secret: ${WEBHOOK_SECRET:change-me-dev-webhook-secret}
 
+  rate-limit:
+    login:
+      # Deliberately simple in-memory limiter. See LoginRateLimiter for what it
+      # cannot do: it is per JVM, resets on restart and does nothing across
+      # replicas.
+      max-attempts: ${LOGIN_RATE_LIMIT_MAX_ATTEMPTS:5}
+      window-seconds: ${LOGIN_RATE_LIMIT_WINDOW_SECONDS:60}
+
 springdoc:
   api-docs:
     path: /v3/api-docs

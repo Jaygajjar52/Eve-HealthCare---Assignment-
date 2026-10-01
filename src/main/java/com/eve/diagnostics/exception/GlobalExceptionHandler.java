@@ -129,6 +129,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return json(HttpStatus.CONFLICT, "This booking was changed by another request. Please retry.", request);
     }
 
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ApiError> handleTooManyRequests(TooManyRequestsException ex,
+                                                          HttpServletRequest request) {
+        log.info("Rate limited {} on {}", request.getRemoteAddr(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", "60")
+                .body(ApiError.of(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request.getRequestURI()));
+    }
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiError> handleConflict(ConflictException ex, HttpServletRequest request) {
         log.info("Conflict on {}: {}", request.getRequestURI(), ex.getMessage());

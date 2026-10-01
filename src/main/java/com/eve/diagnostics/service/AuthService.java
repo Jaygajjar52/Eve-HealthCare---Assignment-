@@ -31,6 +31,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final LoginRateLimiter loginRateLimiter;
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
@@ -51,8 +52,19 @@ public class AuthService {
         return AuthResponse.bearer(jwtService.generateToken(user), jwtService.getExpiresInSeconds());
     }
 
-    public AuthResponse login(LoginRequest request) {
+    /**
+     * @param clientIp the caller's IP, used only for rate limiting. Passed in by
+     *                 the controller so the service does not have to reach into
+     *                 the servlet request itself.
+     */
+    public AuthResponse login(LoginRequest request, String clientIp) {
         String email = normaliseEmail(request.email());
+
+        // Counted before the credentials are checked, so the limit also slows
+        // down someone enumerating which addresses are registered, not just
+        // someone guessing passwords.
+        loginRateLimiter.checkAllowed(clientIp);
+
         try {
             // The AuthenticationManager loads the user and checks the BCrypt hash
             // for us. It throws the same BadCredentialsException for an unknown
