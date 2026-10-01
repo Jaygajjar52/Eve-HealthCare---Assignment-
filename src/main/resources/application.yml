@@ -38,6 +38,13 @@ spring:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
 
+  data:
+    web:
+      pageable:
+        # Cap ?size= so a client cannot ask for the whole table in one response.
+        max-page-size: 100
+        default-page-size: 20
+
 server:
   port: ${SERVER_PORT:8080}
   error:

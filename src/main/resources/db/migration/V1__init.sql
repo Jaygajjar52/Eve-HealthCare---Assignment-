@@ -51,7 +51,8 @@ CREATE TABLE diagnostic_centres (
     created_at TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
--- GET /centres?city=Bengaluru always filters or groups by city.
+-- GET /centres?city=Bengaluru always filters on city. V3 replaces this with an
+-- expression index on lower(city), which is what the query actually needs.
 CREATE INDEX idx_diagnostic_centres_city ON diagnostic_centres (city);
 
 -- ---------------------------------------------------------------------------

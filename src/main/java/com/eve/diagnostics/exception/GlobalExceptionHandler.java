@@ -77,6 +77,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return json(HttpStatus.FORBIDDEN, "You do not have permission to perform this action.", request);
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex,
+                                                   HttpServletRequest request) {
+        log.info("Not found on {}: {}", request.getRequestURI(), ex.getMessage());
+        return json(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiError> handleConflict(ConflictException ex, HttpServletRequest request) {
         log.info("Conflict on {}: {}", request.getRequestURI(), ex.getMessage());
