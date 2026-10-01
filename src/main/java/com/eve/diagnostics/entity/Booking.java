@@ -147,4 +147,20 @@ public class Booking {
     public void transitionTo(BookingStatus newStatus) {
         this.status = newStatus;
     }
+
+    /**
+     * Puts a FAILED booking back to PENDING so a fresh payment attempt can be
+     * applied to it.
+     *
+     * <p>This exists because of the state machine rather than for its own sake.
+     * FAILED is only allowed to move to PENDING, so both the retry path in
+     * PaymentService and a late SUCCESS webhook in WebhookService have to pass
+     * through PENDING first. Without this, a booking whose payment failed could
+     * never be recovered by paying again or by the provider correcting itself.
+     */
+    public void reopenForAnotherPaymentAttempt() {
+        if (status == BookingStatus.FAILED) {
+            transitionTo(BookingStatus.PENDING);
+        }
+    }
 }

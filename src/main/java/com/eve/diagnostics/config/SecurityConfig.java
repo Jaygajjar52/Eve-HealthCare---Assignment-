@@ -58,8 +58,11 @@ public class SecurityConfig {
                         // paths still needs a token.
                         .requestMatchers(HttpMethod.GET, "/centres/**", "/tests/**").permitAll()
                         // Public route, but still protected by the X-Signature HMAC
-                        // check inside PaymentController.
-                        .requestMatchers(HttpMethod.POST, "/payments/webhook/").permitAll()
+                        // check inside PaymentController. Both spellings are listed
+                        // because Boot disables trailing-slash matching, so without
+                        // this a client posting to /payments/webhook would get a 401
+                        // instead of reaching the endpoint.
+                        .requestMatchers(HttpMethod.POST, "/payments/webhook", "/payments/webhook/").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint(authenticationEntryPoint)

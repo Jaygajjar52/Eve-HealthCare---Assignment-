@@ -65,13 +65,11 @@ public class PaymentService {
         Booking booking = findBookingForUser(userId, request.bookingId());
         ensureBookingIsPayable(booking);
 
-        // A retry after a failed attempt starts by putting the booking back to
-        // PENDING, because PENDING is the only status FAILED is allowed to move
-        // to. The new outcome is then applied from PENDING like any first
-        // attempt, so one code path handles both.
-        if (booking.getStatus() == BookingStatus.FAILED) {
-            booking.transitionTo(BookingStatus.PENDING);
-        }
+        // A retry after a failed attempt has to pass through PENDING first,
+        // because FAILED is only allowed to move there. The new outcome is then
+        // applied from PENDING exactly like a first attempt, so one code path
+        // serves both.
+        booking.reopenForAnotherPaymentAttempt();
 
         PaymentStatus outcome = decideOutcome(request.simulateStatus());
 

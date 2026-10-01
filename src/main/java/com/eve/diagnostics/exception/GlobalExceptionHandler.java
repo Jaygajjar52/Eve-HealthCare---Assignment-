@@ -85,6 +85,23 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return json(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(WebhookSignatureException.class)
+    public ResponseEntity<ApiError> handleWebhookSignature(WebhookSignatureException ex,
+                                                           HttpServletRequest request) {
+        // Nothing was read or written before this check, so there is no risk of a
+        // forged request having had any effect.
+        return json(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(WebhookValidationException.class)
+    public ResponseEntity<ApiError> handleWebhookValidation(WebhookValidationException ex,
+                                                            HttpServletRequest request) {
+        log.info("Webhook validation failed on {}", request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of(HttpStatus.BAD_REQUEST, ex.getMessage(),
+                        request.getRequestURI(), ex.getFieldErrors()));
+    }
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiError> handleBadRequest(BadRequestException ex,
                                                      HttpServletRequest request) {
