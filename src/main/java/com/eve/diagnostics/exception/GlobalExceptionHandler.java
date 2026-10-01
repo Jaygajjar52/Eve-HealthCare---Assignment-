@@ -7,15 +7,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.List;
@@ -131,6 +135,26 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return json(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
+    /**
+     * A unique constraint rejected a row, normally because two requests raced.
+     *
+     * <p>The services check first, for example {@code existsByEmail}, but a check
+     * followed by an insert is a race: two simultaneous signups can both pass the
+     * check and the second INSERT then loses. The database is what actually
+     * decides, and it rejects the loser, which must be a 409 rather than the 500
+     * this would otherwise become.
+     *
+     * <p>The message is deliberately fixed. The underlying message names the
+     * table and constraint, which is exactly the detail a client should not get.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrityViolation(DataIntegrityViolationException ex,
+                                                                  HttpServletRequest request) {
+        log.info("Constraint violation on {}: {}", request.getRequestURI(), ex.getMostSpecificCause().getMessage());
+        return json(HttpStatus.CONFLICT,
+                "That request conflicts with data that already exists.", request);
+    }
+
     /** Anything unforeseen. The detail stays in the log, never in the response. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest request) {
@@ -159,16 +183,35 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .toList();
     }
 
-    /** A message a human can act on, per situation. */
+    /**
+     * A message the caller can actually act on.
+     *
+     * <p>Never the exception's own message for these: Spring's messages are
+     * written for developers and quote class names and parameter types, which is
+     * noise for a client and a small amount of information about our internals.
+     */
     private String messageFor(Exception ex, HttpStatus status) {
         if (ex instanceof MethodArgumentNotValidException) {
             return "Validation failed.";
+        }
+        if (ex instanceof MethodArgumentTypeMismatchException mismatch) {
+            // A malformed UUID in the path, or ?status=NOT_A_STATUS.
+            return "'" + mismatch.getName() + "' has an invalid value. Expected "
+                    + mismatch.getRequiredType().getSimpleName() + ".";
+        }
+        if (ex instanceof MissingServletRequestParameterException missing) {
+            return "Required parameter '" + missing.getParameterName() + "' is missing.";
+        }
+        if (ex instanceof HttpMessageNotReadableException) {
+            // Covers malformed JSON, a value of the wrong JSON type, and an
+            // unrecognised enum constant such as "status": "REFUNDED".
+            return "Request body is missing or not valid JSON.";
         }
         return switch (status) {
             case NOT_FOUND -> "The requested resource was not found.";
             case METHOD_NOT_ALLOWED -> "This endpoint does not support that HTTP method.";
             case UNSUPPORTED_MEDIA_TYPE -> "Content-Type must be application/json.";
-            case BAD_REQUEST -> "The request body could not be read.";
+            case BAD_REQUEST -> "The request could not be understood.";
             default -> status.getReasonPhrase();
         };
     }
