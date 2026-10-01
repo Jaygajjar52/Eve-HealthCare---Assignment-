@@ -65,6 +65,14 @@ public class Payment {
     @Column(name = "failure_reason", length = 255)
     private String failureReason;
 
+    /**
+     * Optional "Idempotency-Key" header value from the request. UNIQUE in the
+     * schema, so retrying with the same key returns the original payment instead
+     * of creating a second one. Null when the client did not send one.
+     */
+    @Column(name = "idempotency_key", length = 120)
+    private String idempotencyKey;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

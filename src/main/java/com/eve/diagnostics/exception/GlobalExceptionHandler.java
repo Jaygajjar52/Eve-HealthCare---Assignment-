@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -82,6 +83,29 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                                    HttpServletRequest request) {
         log.info("Not found on {}: {}", request.getRequestURI(), ex.getMessage());
         return json(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiError> handleBadRequest(BadRequestException ex,
+                                                     HttpServletRequest request) {
+        log.info("Bad request on {}: {}", request.getRequestURI(), ex.getMessage());
+        return json(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    /**
+     * Lost an optimistic-locking race on Booking.version: another request read
+     * the same booking first and got its UPDATE in before ours. Nothing was
+     * half-written, so the client is safe to simply try again.
+     *
+     * <p>This is caught here rather than inside the service because Hibernate
+     * raises it when the transaction commits, which happens after the service
+     * method has already returned.
+     */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiError> handleOptimisticLock(ObjectOptimisticLockingFailureException ex,
+                                                         HttpServletRequest request) {
+        log.info("Optimistic lock conflict on {} - telling the client to retry", request.getRequestURI());
+        return json(HttpStatus.CONFLICT, "This booking was changed by another request. Please retry.", request);
     }
 
     @ExceptionHandler(ConflictException.class)
