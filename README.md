@@ -484,6 +484,39 @@ Only a bad signature (401) or a malformed body (400) tells it to come back.
 
 ---
 
+## 5b. Postman API Testing & Screenshots
+
+A complete, importable Postman collection is provided in this repository at:
+[`docs/EVE_Healthcare.postman_collection.json`](docs/EVE_Healthcare.postman_collection.json).
+
+Below are verified live test executions from Postman covering the primary API workflows:
+
+### 1. Authentication — Admin & Patient Login (`POST /auth/login`)
+Returns a signed JWT bearer token and expiration. Invalid credentials return a generic 401 response without disclosing whether an email exists.
+![Postman Admin Login](docs/screenshots/01_postman_auth_login.png)
+
+### 2. Browse Diagnostic Centres (`GET /centres?city=Mumbai`)
+Public catalogue browsing with pagination and case-insensitive city search.
+![Postman Centres List](docs/screenshots/02_postman_centres_list.png)
+
+### 3. Create Appointment Booking (`POST /bookings`)
+Authenticated patient books a diagnostic test at a centre for a specified UTC slot. The price snapshot is copied from the centre's test catalogue.
+![Postman Create Booking](docs/screenshots/03_postman_create_booking.png)
+
+### 4. Process Payment with Idempotency Key (`POST /payments`)
+Processes payment through the simulated gateway. Supports `Idempotency-Key` header to protect against accidental double charges on client retries.
+![Postman Process Payment](docs/screenshots/04_postman_process_payment.png)
+
+### 5. Payment Provider Webhook (`POST /payments/webhook/`)
+Simulates payment provider webhook delivery authenticated with HMAC-SHA256 signature (`X-Signature`). Updates the payment and booking state safely.
+![Postman Webhook Processed](docs/screenshots/05_postman_webhook_processed.png)
+
+### 6. Webhook Idempotency & Replay Protection (`POST /payments/webhook/`)
+Duplicate webhook deliveries are detected via the database `UNIQUE(event_id)` ledger. Returning `200 ALREADY_PROCESSED` without double mutating state.
+![Postman Webhook Idempotency](docs/screenshots/06_postman_webhook_idempotency.png)
+
+---
+
 ## 6. Database schema
 
 ### Tables

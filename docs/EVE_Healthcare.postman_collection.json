@@ -1,0 +1,358 @@
+{
+  "info": {
+    "_postman_id": "e8d64112-9c44-42b7-873b-evehealth001",
+    "name": "EVE Healthcare Diagnostic Booking API",
+    "description": "Comprehensive Postman Collection for EVE Healthcare Diagnostic Test Booking & Payment Service.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@evehealth.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "User Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Asha Sharma\",\n  \"email\": \"asha.sharma@evehealth.com\",\n  \"password\": \"Password@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/signup",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            }
+          }
+        },
+        {
+          "name": "User Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"asha.sharma@evehealth.com\",\n  \"password\": \"Password@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Centres & Tests",
+      "item": [
+        {
+          "name": "List All Centres",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/centres",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "centres"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Centres by City (Filter)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/centres?city=Mumbai",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "centres"
+              ],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "Mumbai"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Centre Details",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/centres/11111111-1111-1111-1111-111111111111",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "centres",
+                "11111111-1111-1111-1111-111111111111"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Tests Catalogue",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/tests",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tests"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Centre (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"EVE Health - Pune Diagnostic Hub\",\n  \"city\": \"Pune\",\n  \"address\": \"FC Road, Shivajinagar, Pune 411005\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/centres",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "centres"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"centreId\": \"11111111-1111-1111-1111-111111111111\",\n  \"testId\": \"a1111111-1111-1111-1111-111111111111\",\n  \"appointmentTime\": \"2026-10-15T09:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bookings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/cancel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "cancel"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Payments & Webhooks",
+      "item": [
+        {
+          "name": "Process Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "idemp-test-key-001"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"6e250e70-d765-4d0b-99e8-ed09c239c187\",\n  \"simulateStatus\": \"SUCCESS\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Payment Webhook (Provider)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Signature",
+                "value": "85865187cc6b6d063dcb309e36a64be1a614bdb0f167069382b909c975c5d8df"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-provider-9901\",\n  \"paymentId\": \"48c1c468-3c97-4566-bb5d-fcef64ac000f\",\n  \"bookingId\": \"6e250e70-d765-4d0b-99e8-ed09c239c187\",\n  \"status\": \"SUCCESS\",\n  \"timestamp\": \"2026-10-02T11:20:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/webhook/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "webhook",
+                ""
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
