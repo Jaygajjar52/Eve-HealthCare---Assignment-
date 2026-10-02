@@ -36,6 +36,7 @@ public class SecurityConfig {
 
     /** Public endpoints. Everything not listed here needs a valid token. */
     private static final String[] PUBLIC_PATHS = {
+            "/",
             "/auth/**",
             "/swagger-ui.html",
             "/swagger-ui/**",

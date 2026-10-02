@@ -63,20 +63,76 @@ Stop it with `docker compose down`. Add `-v` to also delete the database volume.
 You need a local PostgreSQL and Java 17+. Maven is **not** required - the project ships a Maven
 Wrapper.
 
+**Step 1: create the database and role, once.** Connect to your PostgreSQL as the `postgres`
+superuser (pgAdmin, or a terminal) and run:
+
 ```bash
-# 1. create the database and a role for it
-createdb evediagnostics
-psql -c "CREATE ROLE eve LOGIN PASSWORD 'eve_password';"
+psql -U postgres -f scripts/create-local-database.sql
+```
 
-# 2. point the app at it (any of these; the defaults are shown)
-export DB_URL=jdbc:postgresql://localhost:5432/evediagnostics
-export DB_USERNAME=eve
-export DB_PASSWORD=eve_password
+Or paste the two statements straight into a psql / pgAdmin session:
 
-# 3. run
+```sql
+CREATE ROLE eve LOGIN PASSWORD 'eve_password';
+CREATE DATABASE evediagnostics OWNER eve;
+```
+
+**Step 2: run it.** No configuration is needed, because `application.yml` already defaults to
+exactly those credentials:
+
+```bash
 ./mvnw spring-boot:run          # Linux / macOS
 .\mvnw.cmd spring-boot:run      # Windows
 ```
+
+Or just press Run in IntelliJ.
+
+On startup Flyway applies the four migrations, creating the schema and the seed data, and the
+application serves Swagger UI on <http://localhost:8080>.
+
+<details>
+<summary>If you want to use different database credentials</summary>
+
+Override them as environment variables. These are the defaults, so you only need to set them if
+your local setup differs:
+
+```bash
+export DB_URL=jdbc:postgresql://localhost:5432/evediagnostics
+export DB_USERNAME=eve
+export DB_PASSWORD=eve_password
+```
+
+In IntelliJ: **Run > Edit Configurations > Environment variables**.
+
+Note that a `.env` file does **not** work for this. `.env` is read by `docker compose` only;
+Spring Boot does not load it, so creating one will not change anything when you start the app from
+IntelliJ or from `mvnw spring-boot:run`.
+
+</details>
+
+<details>
+<summary>"password authentication failed for user eve"</summary>
+
+The application reached PostgreSQL and was rejected, then failed to start because the database
+never became available. The real cause is at the very bottom of the stack trace; everything above
+it is a consequence, so scroll past the `jwtAuthFilter` and `entityManagerFactory` noise.
+
+It almost always means one of:
+
+1. The role or database from step 1 does not exist yet.
+2. The password is wrong. Re-running `scripts/create-local-database.sql` resets it.
+3. You are pointing at a different PostgreSQL than the one you created the role in.
+
+To check by hand:
+
+```bash
+psql -U eve -d evediagnostics -h localhost -c "SELECT 1;"
+```
+
+If that connects, the app will too. If it does not, PostgreSQL is rejecting the credentials and the
+problem is on the database side, not in the application.
+
+</details>
 
 ### Configuration
 
@@ -140,8 +196,12 @@ The H2 fallback is honest about what it loses:
 
 ## 4. Swagger UI and seeded admin
 
+- **Just open:** <http://localhost:8080> - the root path redirects here
 - **Swagger UI:** <http://localhost:8080/swagger-ui.html>
 - **OpenAPI JSON:** <http://localhost:8080/v3/api-docs>
+
+Whatever way you start the application - `docker compose up`, `mvnw spring-boot:run`, the jar, or
+Run in IntelliJ - the root URL lands on the API documentation, so there is nothing to remember.
 
 Click **Authorize** and paste a token to try the authenticated endpoints.
 
@@ -187,6 +247,7 @@ no offset is rejected with 400.
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
+| `GET` | `/` | public | Redirects to Swagger UI |
 | `POST` | `/auth/signup` | public | Register, returns a token |
 | `POST` | `/auth/login` | public | Returns a token. Rate limited |
 | `GET` | `/centres?city=&page=&size=` | public | List centres, optional city filter |

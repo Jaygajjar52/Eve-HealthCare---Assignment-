@@ -9,8 +9,8 @@ spring:
 
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/evediagnostics}
-    username: ${DB_USERNAME:eve}
-    password: ${DB_PASSWORD:eve_password}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:Admin@321}
 
   # Flyway owns the schema. Hibernate only checks that the mapping matches it,
   # it must never create or alter tables itself.
@@ -81,6 +81,10 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+    # Opening http://localhost:8080 lands here (see HomeController), so the UI
+    # should be the last thing it shows rather than a landing page.
+    disable-swagger-default-url: true
+    display-request-duration: true
     operations-sorter: method
     tags-sorter: alpha
 

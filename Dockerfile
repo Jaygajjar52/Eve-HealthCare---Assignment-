@@ -1,29 +1,33 @@
 # ---------------------------------------------------------------------------
-# Stage 1: build the jar with Maven.
-# The dependency layer is copied and downloaded on its own so that editing
-# source code does not re-download the whole internet on every rebuild.
+# Stage 1: Build the JAR with Maven
 # ---------------------------------------------------------------------------
-FROM maven:3.9-eclipse-temurin-17 AS build
+FROM maven:3.9-eclipse-temurin-21 AS build
 
 WORKDIR /build
 
+# Copy dependency definition first for Docker layer caching
 COPY pom.xml .
+
 RUN mvn -B dependency:go-offline
 
+# Copy source code
 COPY src ./src
+
+# Build application
 RUN mvn -B clean package -DskipTests
 
 # ---------------------------------------------------------------------------
-# Stage 2: ship only a JRE and the built jar. No Maven, no sources in the
-# final image, and the app runs as a non-root user.
+# Stage 2: Runtime image
 # ---------------------------------------------------------------------------
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
+# Create non-root user
 RUN groupadd --system eve \
     && useradd --system --gid eve --no-create-home eve
 
+# Copy JAR
 COPY --from=build --chown=eve:eve /build/target/diagnostics-service-*.jar app.jar
 
 USER eve

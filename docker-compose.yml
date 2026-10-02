@@ -3,7 +3,7 @@ name: eve-diagnostics
 services:
   postgres:
     image: postgres:16
-    container_name: eve-postgres
+    container_name: eve-healthcare-postgres
     environment:
       POSTGRES_DB: ${DB_NAME:-evediagnostics}
       POSTGRES_USER: ${DB_USERNAME:-eve}
